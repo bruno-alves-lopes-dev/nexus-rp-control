@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NexusGG · Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0e10;--s1:#141618;--s2:#1a1c20;--s3:#202328;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.12);--b3:rgba(255,255,255,.2);
+  --tx:#e2e4e8;--t2:#8c909a;--t3:#4a4e58;
+  --gold:#c9a227;--gold-d:rgba(201,162,39,.12);--gold-b:rgba(201,162,39,.3);
+  --green:#4caf6e;--green-d:rgba(76,175,110,.12);--green-b:rgba(76,175,110,.3);
+  --red:#e05c5c;--red-d:rgba(224,92,92,.12);--red-b:rgba(224,92,92,.3);
+  --blue:#5b9cf6;--blue-d:rgba(91,156,246,.12);--blue-b:rgba(91,156,246,.3);
+  --purple:#9b8ef5;--purple-d:rgba(155,142,245,.12);
+  --r:8px;--rl:12px;--rxl:16px;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+}
+html{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.6}
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* ── Auth ── */
+#auth{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200}
+.auth-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rxl);padding:2rem;width:340px}
+.auth-box h2{font-size:16px;font-weight:500;margin-bottom:.4rem}
+.auth-box p{font-size:12px;color:var(--t2);margin-bottom:1.25rem}
+.auth-err{font-size:12px;color:var(--red);margin-top:.5rem;display:none}
+
+/* ── Layout ── */
+#app{display:none;flex:1;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;background:var(--s1);border-bottom:1px solid var(--b1);position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.faction-badge{font-size:10px;font-weight:700;letter-spacing:.12em;padding:4px 10px;border-radius:var(--r);background:var(--gold-d);color:var(--gold);border:1px solid var(--gold-b);text-transform:uppercase}
+.topbar h1{font-size:15px;font-weight:500}
+.live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);font-family:var(--mono)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.nav{display:flex;gap:2px;padding:.5rem 1.5rem;background:var(--s1);border-bottom:1px solid var(--b1);overflow-x:auto}
+.nav-btn{padding:6px 14px;font-size:12px;font-weight:500;border-radius:var(--r);border:none;background:transparent;color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.nav-btn:hover{background:var(--s2);color:var(--tx)}
+.nav-btn.active{background:var(--s2);color:var(--tx);border:1px solid var(--b2)}
+
+.main{padding:1.5rem;flex:1;max-width:1100px;margin:0 auto;width:100%}
+
+/* ── Components ── */
+.section{margin-bottom:2rem}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.section-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em}
+
+.grid{display:grid;gap:10px}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:700px){.grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+
+/* Card */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:1rem 1.1rem;transition:border-color .15s}
+.card:hover{border-color:var(--b2)}
+.card.accent-gold{border-color:var(--gold-b)}
+.card.accent-green{border-color:var(--green-b)}
+.card.accent-red{border-color:var(--red-b)}
+
+/* Stat card */
+.stat-card{background:var(--s2);border-radius:var(--r);padding:.85rem 1rem}
+.stat-label{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:600;font-family:var(--mono)}
+.stat-sub{font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+
+/* Progress bar */
+.progress-wrap{display:flex;align-items:center;gap:8px}
+.progress-icon{font-size:11px;color:var(--t3);font-family:var(--mono);min-width:10px}
+.progress-track{flex:1;height:4px;background:var(--s3);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.fill-green{background:var(--green)}.fill-gold{background:var(--gold)}.fill-red{background:var(--red)}
+.progress-pct{font-size:11px;font-family:var(--mono);color:var(--t2);min-width:32px;text-align:right}
+.progress-val{font-size:11px;font-family:var(--mono);color:var(--t3);min-width:100px;text-align:right}
+
+/* Badge/pill */
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;letter-spacing:.03em}
+.badge-green{background:var(--green-d);color:var(--green);border:1px solid var(--green-b)}
+.badge-gold{background:var(--gold-d);color:var(--gold);border:1px solid var(--gold-b)}
+.badge-red{background:var(--red-d);color:var(--red);border:1px solid var(--red-b)}
+.badge-blue{background:var(--blue-d);color:var(--blue);border:1px solid var(--blue-b)}
+
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;padding:6px 10px;border-bottom:1px solid var(--b1)}
+td{padding:8px 10px;border-bottom:1px solid var(--b1);color:var(--tx)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--s2)}
+.mono{font-family:var(--mono);font-size:12px}
+
+/* Member row */
+.member-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:.85rem 1rem;margin-bottom:6px;transition:border-color .15s}
+.member-card:hover{border-color:var(--b2)}
+.member-card.leader{border-color:var(--gold-b)}
+.member-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.member-rank{font-size:14px;min-width:22px}
+.member-name{font-size:14px;font-weight:500;flex:1}
+.member-metas{display:flex;flex-direction:column;gap:6px}
+.extra-row{margin-top:7px;padding-top:7px;border-top:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.extra-chip{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:var(--r);background:var(--s2);color:var(--t2);border:1px solid var(--b1)}
+.extra-chip strong{color:var(--tx)}
+.extra-chip.hl{background:var(--green-d);color:var(--green);border-color:var(--green-b)}
+.extra-chip.hl strong{color:var(--green)}
+
+/* Buttons */
+.btn{padding:6px 14px;font-size:12px;font-weight:500;border-radius:var(--r);cursor:pointer;border:none;transition:all .15s}
+.btn-gold{background:var(--gold-d);color:var(--gold);border:1px solid var(--gold-b)}
+.btn-gold:hover{background:rgba(201,162,39,.2)}
+.btn-red{background:var(--red-d);color:var(--red);border:1px solid var(--red-b)}
+.btn-red:hover{background:rgba(224,92,92,.2)}
+.btn-blue{background:var(--blue-d);color:var(--blue);border:1px solid var(--blue-b)}
+.btn-blue:hover{background:rgba(91,156,246,.2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Forms */
+input,select{background:var(--s2);border:1px solid var(--b1);color:var(--tx);border-radius:var(--r);padding:6px 10px;font-size:13px;font-family:var(--mono);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus{border-color:var(--b3)}
+input::placeholder{color:var(--t3)}
+label{font-size:11px;color:var(--t2);display:block;margin-bottom:4px}
+.field{margin-bottom:.75rem}
+
+/* Misc */
+.empty{font-size:13px;color:var(--t3);padding:.75rem 0}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.divider{border:none;border-top:1px solid var(--b1);margin:1.25rem 0}
+.tag-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:.4rem}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--red-d);color:var(--red);border:1px solid var(--red-b)}
+
+.footer{padding:.75rem 1.5rem;border-top:1px solid var(--b1);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--s1)}
+.footer-info{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.legend{display:flex;gap:14px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+
+/* Skeleton */
+.skel{background:var(--s2);border-radius:var(--rl);animation:sk 1.4s infinite}
+.skel-h{height:80px;margin-bottom:6px}
+@keyframes sk{0%,100%{opacity:.5}50%{opacity:.8}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ AUTH ══════════════════ -->
+<div id="auth">
+  <div class="auth-box">
+    <h2>NexusGG · Dashboard</h2>
+    <p>Digite a chave de acesso do servidor.</p>
+    <div class="field"><input type="password" id="key-input" placeholder="API Key" autocomplete="off"></div>
+    <button class="btn btn-gold" style="width:100%" onclick="AUTH.login()">Entrar</button>
+    <p class="auth-err" id="auth-err">Chave inválida ou servidor offline.</p>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="faction-badge" id="tb-faction">NexusGG</span>
+      <h1>Dashboard administrativo</h1>
+    </div>
+    <div class="live"><span class="live-dot"></span><span id="live-txt">conectando...</span></div>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav" id="nav"></div>
+
+  <!-- Main content -->
+  <div class="main" id="main"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="footer-info" id="footer-txt">—</span>
+    <div class="legend">
+      <span class="legend-item"><span class="dot" style="background:#e05c5c"></span>Droga · 65%</span>
+      <span class="legend-item"><span class="dot" style="background:#5b9cf6"></span>Ação · 75%</span>
+      <span class="legend-item"><span class="dot" style="background:#4caf6e"></span>Livre · 100%</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════
+// CONFIG — edite aqui para mudar labels, taxas e metas globalmente
+// ══════════════════════════════════════════════════════════════════
+const CONFIG = {
+  api: {
+    base:     window.location.origin,
+    poll:     5000,
+    keyStore: 'nexus_api_key',
+  },
+  faction: 'NexusGG',
+  farm: {
+    metas: { dinheiroSujo: 100_000, componentes: 5_000 },
+    taxas: {
+      droga: { label: 'Droga',  pct: 0.65, cor: '#e05c5c' },
+      acao:  { label: 'Ação',   pct: 0.75, cor: '#5b9cf6' },
+      livre: { label: 'Livre',  pct: 1.00, cor: '#4caf6e' },
+    },
+    convLimpo: 0.5,
+  },
+  encomenda: {
+    tipos: {
+      comum:    { label: '⚪ Comum',    preco: 45 },
+      incomum:  { label: '🟢 Incomum',  preco: 50 },
+      rara:     { label: '🔵 Rara',     preco: 55 },
+      mitica:   { label: '🟣 Mítica',   preco: 60 },
+      lendaria: { label: '🟡 Lendária', preco: 65 },
+    },
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// UTILS — funções puras de formatação e cálculo
+// ══════════════════════════════════════════════════════════════════
+const U = {
+  R$:  v => 'R$ ' + Math.round(v).toLocaleString('pt-BR'),
+  Num: v => Math.round(v).toLocaleString('pt-BR'),
+  Pct: v => Math.min(100, Math.round(v)) + '%',
+  ts:  v => v ? new Date(v).toLocaleTimeString('pt-BR') : '—',
+  dt:  v => v ? new Date(v).toLocaleDateString('pt-BR') : '—',
+  fillClass: p => p >= 1 ? 'fill-green' : p >= .5 ? 'fill-gold' : 'fill-red',
+
+  calcFarm(m) {
+    const { metas, taxas, convLimpo } = CONFIG.farm;
+    const sujo = m.sujo || 0, comp = m.comp || 0;
+    const pctS = metas.dinheiroSujo > 0 ? Math.min(1, sujo / metas.dinheiroSujo) : 1;
+    const pctC = metas.componentes  > 0 ? Math.min(1, comp / metas.componentes)  : 1;
+    const bateuS = sujo >= metas.dinheiroSujo, bateuC = comp >= metas.componentes;
+    const excedente = Math.max(0, sujo - metas.dinheiroSujo);
+    const breakdown = [];
+    if (excedente > 0) {
+      const total = (m.droga||0)+(m.acao||0)+(m.livre||0)||1;
+      for (const [k, t] of Object.entries(taxas)) {
+        const val = m[k]||0; if (!val) continue;
+        const extra = Math.round(excedente*(val/total));
+        const doMembro = Math.round(extra*t.pct);
+        breakdown.push({ label:t.label, cor:t.cor, extra, doMembro, limpo: Math.round(doMembro*convLimpo) });
+      }
+    }
+    return { pctS, pctC, bateuS, bateuC, bateuAlguma: bateuS||bateuC, excedente, breakdown,
+      totalLimpo: breakdown.reduce((s,c)=>s+c.limpo,0) };
+  },
+
+  el: (tag, cls='', html='') => { const e=document.createElement(tag); if(cls)e.className=cls; if(html)e.innerHTML=html; return e; },
+  $: id => document.getElementById(id),
+};
+
+// ══════════════════════════════════════════════════════════════════
+// SERVICES — toda comunicação com API isolada aqui
+// ══════════════════════════════════════════════════════════════════
+const API = {
+  _key: '',
+  _h() { return { Authorization: this._key, 'Content-Type': 'application/json' }; },
+
+  async get(path) {
+    const r = await fetch(CONFIG.api.base + path, { headers: this._h() });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  },
+  async post(path, body) {
+    const r = await fetch(CONFIG.api.base + path, { method:'POST', headers: this._h(), body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  },
+
+  async fetchAll()    { return this.get('/api/farm'); },
+  async resetFarm()   { return this.post('/api/reset', { confirmar: true }); },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// COMPONENTS — blocos de UI reutilizáveis
+// ══════════════════════════════════════════════════════════════════
+const C = {
+  statCard(label, value, sub='') {
+    return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value mono">${value}</div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;
+  },
+
+  progressBar(icon, pct, val, meta) {
+    const p = Math.min(100, Math.round(pct*100));
+    return `<div class="progress-wrap">
+      <span class="progress-icon">${icon}</span>
+      <div class="progress-track"><div class="progress-fill ${U.fillClass(pct)}" style="width:${p}%"></div></div>
+      <span class="progress-pct">${p}%</span>
+      <span class="progress-val">${val} / ${meta}</span>
+    </div>`;
+  },
+
+  badge(txt, cls) { return `<span class="badge badge-${cls}">${txt}</span>`; },
+
+  memberBadge(res, m) {
+    const temFarm = (m.sujo||0)+(m.comp||0) > 0;
+    if (!temFarm)           return C.badge('Sem farm','red');
+    if (res.bateuAlguma)    return C.badge('Meta batida','green');
+    if (Math.max(res.pctS,res.pctC) >= .75) return C.badge('Quase lá','gold');
+    return C.badge('Pendente','red');
+  },
+
+  sectionHeader(title, btnHtml='') {
+    return `<div class="section-header"><span class="section-title">${title}</span>${btnHtml}</div>`;
+  },
+
+  table(headers, rows) {
+    if (!rows.length) return '<p class="empty">Nenhum registro encontrado.</p>';
+    return `<div class="tbl-wrap"><table>
+      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>`;
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// MODULES — cada sistema do bot como módulo independente
+// ══════════════════════════════════════════════════════════════════
+
+// ── Módulo: Farm ──────────────────────────────────────────────────
+const ModFarm = {
+  render(data) {
+    const farm = data.farm || {};
+    const { metas } = CONFIG.farm;
+    const MEDALHAS = ['🥇','🥈','🥉'];
+
+    const lista = Object.entries(farm)
+      .map(([id,d])=>({id,...d}))
+      .sort((a,b)=>(b.sujo||0)-(a.sujo||0));
+    const ativos  = lista.filter(m=>(m.sujo||0)+(m.comp||0)>0);
+    const inativos = lista.filter(m=>(m.sujo||0)+(m.comp||0)===0);
+
+    let tSujo=0, tComp=0, metaBatida=0, tLimpo=0;
+    ativos.forEach(m=>{ tSujo+=m.sujo||0; tComp+=m.comp||0; const r=U.calcFarm(m); if(r.bateuAlguma)metaBatida++; tLimpo+=r.totalLimpo; });
+
+    // Stats
+    const stats = `<div class="grid grid-4" style="margin-bottom:1.25rem">
+      ${C.statCard('Total sujo',U.R$(tSujo),'semana atual')}
+      ${C.statCard('Componentes',U.Num(tComp),'unidades')}
+      ${C.statCard('Meta batida',`${metaBatida}/${ativos.length}`,'membros ativos')}
+      ${C.statCard('Limpo gerado',U.R$(tLimpo),'excedente convertido')}
+    </div>`;
+
+    // Config cards
+    const cfgCard = `<div class="card" style="margin-bottom:1.25rem">
+      <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">
+        <div>
+          <div class="stat-label">Meta semanal</div>
+          <div style="font-size:13px;margin-top:4px">
+            💸 ${U.R$(metas.dinheiroSujo)}/membro &nbsp;·&nbsp; 🛠️ ${U.Num(metas.componentes)} comps/membro
+          </div>
+        </div>
+        <div>
+          <div class="stat-label">Taxas do excedente</div>
+          <div style="font-size:13px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">
+            ${Object.entries(CONFIG.farm.taxas).map(([,t])=>`<span><span class="dot" style="background:${t.cor};display:inline-block;margin-right:4px"></span>${t.label} ${Math.round(t.pct*100)}%</span>`).join('')}
+            &nbsp;·&nbsp; ${Math.round(CONFIG.farm.convLimpo*100)}% do excedente do membro vira limpo
+          </div>
+        </div>
+        <div style="margin-left:auto">
+          <div class="btn-row">
+            <button class="btn btn-gold" onclick="DASHBOARD.refresh()">Atualizar</button>
+            <button class="btn btn-red" id="btn-reset-farm" onclick="MOD.resetFarm()">Resetar semana</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+    // Ranking
+    const rankingHtml = ativos.length
+      ? ativos.map((m,i)=>{
+          const r = U.calcFarm(m);
+          let barras = '';
+          if (metas.dinheiroSujo>0) barras += C.progressBar('$', r.pctS, U.R$(m.sujo||0), U.R$(metas.dinheiroSujo));
+          if (metas.componentes>0)  barras += C.progressBar('#', r.pctC, U.Num(m.comp||0)+' un', U.Num(metas.componentes)+' un');
+
+          let extra = '';
+          if (r.breakdown.length) {
+            const chips = r.breakdown.map(c=>`<span class="extra-chip">${c.label}: <strong>${U.R$(c.doMembro)}</strong> · limpo <strong>${U.R$(c.limpo)}</strong></span>`).join('');
+            extra = `<div class="extra-row"><span style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Extra</span>${chips}<span class="extra-chip hl">Total limpo: <strong>${U.R$(r.totalLimpo)}</strong></span></div>`;
+          }
+
+          return `<div class="member-card ${i===0?'leader':''}">
+            <div class="member-top">
+              <span class="member-rank">${MEDALHAS[i]??`<span style="font-size:12px;color:var(--t3)">${i+1}</span>`}</span>
+              <span class="member-name">${m.nome||m.id}</span>
+              ${C.memberBadge(r,m)}
+            </div>
+            <div class="member-metas">${barras||'<span style="font-size:12px;color:var(--t3)">Sem registros</span>'}</div>
+            ${extra}
+          </div>`;
+        }).join('')
+      : '<p class="empty">Nenhum registro esta semana.</p>';
+
+    const semFarm = inativos.length
+      ? `<div class="section" style="margin-top:1rem">${C.sectionHeader(`Sem entrega (${inativos.length})`)}<div class="tag-list">${inativos.map(m=>`<span class="tag">${m.nome||m.id}</span>`).join('')}</div></div>`
+      : '';
+
+    return `
+      ${stats}${cfgCard}
+      <div class="section">${C.sectionHeader(`Ranking de membros (${ativos.length})`)}${rankingHtml}</div>
+      ${semFarm}
+    `;
+  },
+};
+
+// ── Módulo: Liderança ─────────────────────────────────────────────
+const ModLideranca = {
+  render(data) {
+    const caixa   = data.caixa   || { sujo:0, limpo:0, auditoria:[] };
+    const bau     = data.bau     || { itens:{}, auditoria:[] };
+    const compras = data.compras || [];
+
+    const totalCaixa = (caixa.sujo||0) + (caixa.limpo||0);
+
+    const stats = `<div class="grid grid-3" style="margin-bottom:1.25rem">
+      ${C.statCard('Caixa — Sujo', U.R$(caixa.sujo||0), 'dinheiro sujo')}
+      ${C.statCard('Caixa — Limpo', U.R$(caixa.limpo||0), 'dinheiro limpo')}
+      ${C.statCard('Total em caixa', U.R$(totalCaixa), 'sujo + limpo')}
+    </div>`;
+
+    // Baú
+    const itens = Object.entries(bau.itens||{}).filter(([,q])=>q>0).sort((a,b)=>b[1]-a[1]);
+    const bauHtml = itens.length
+      ? C.table(['Item','Quantidade'],itens.map(([n,q])=>[n,`<span class="mono">${U.Num(q)}</span>`]))
+      : '<p class="empty">Baú vazio.</p>';
+
+    // Compras
+    const comprasHtml = compras.length
+      ? C.table(['Item','Qtd','Unitário','Total','Operador','Data'],
+          [...compras].reverse().slice(0,20).map(c=>[
+            c.item,
+            `<span class="mono">${c.qtd||1}</span>`,
+            `<span class="mono">${U.R$(c.unitario||0)}</span>`,
+            `<span class="mono">${U.R$(c.valor||0)}</span>`,
+            `<@${c.operador}>`,
+            U.dt(c.ts),
+          ]))
+      : '<p class="empty">Nenhuma compra registrada.</p>';
+
+    // Auditoria caixa
+    const audHtml = (caixa.auditoria||[]).length
+      ? C.table(['Tipo','Valor','Operador','Data'],
+          [...(caixa.auditoria||[])].reverse().slice(0,15).map(a=>[
+            a.tipo,
+            `<span class="mono">${U.R$(a.valor||0)}</span>`,
+            `<@${a.operador}>`,
+            U.dt(a.ts),
+          ]))
+      : '<p class="empty">Sem movimentações.</p>';
+
+    return `
+      ${stats}
+      <div class="grid grid-2" style="gap:1rem">
+        <div class="section card">
+          ${C.sectionHeader('Baú da liderança')}
+          ${bauHtml}
+        </div>
+        <div class="section card">
+          ${C.sectionHeader('Caixa — Auditoria')}
+          ${audHtml}
+        </div>
+      </div>
+      <div class="section card" style="margin-top:1rem">
+        ${C.sectionHeader('Compras registradas')}
+        ${comprasHtml}
+      </div>
+    `;
+  },
+};
+
+// ── Módulo: Encomendas ────────────────────────────────────────────
+const ModEncomendas = {
+  render(data) {
+    const enc = data.encomendas || [];
+    const tipos = CONFIG.encomenda.tipos;
+
+    // Tabela de preços
+    const precos = `<div class="card" style="margin-bottom:1.25rem">
+      <div class="stat-label" style="margin-bottom:.75rem">Tabela de preços</div>
+      <div class="grid grid-5" style="--cols:5;display:flex;flex-wrap:wrap;gap:8px">
+        ${Object.entries(tipos).map(([,t])=>
+          `<div class="stat-card" style="min-width:110px">${C.statCard(t.label,U.R$(t.preco),'por unidade')}</div>`
+        ).join('')}
+      </div>
+    </div>`;
+
+    // Registros
+    const rows = [...enc].reverse().slice(0,30).map(e=>{
+      const linhas = Object.entries(e.itens||{}).map(([k,q])=>{
+        const t=tipos[k]; if(!t)return'';
+        return `${t.label}: ${U.Num(q)} un`;
+      }).filter(Boolean).join(' · ');
+      return [e.familia||'—', linhas||'—', `<span class="mono">${U.R$(e.total||0)}</span>`, U.dt(e.ts)];
+    });
+
+    return `
+      ${precos}
+      <div class="section card">
+        ${C.sectionHeader(`Encomendas registradas (${enc.length})`)}
+        ${rows.length ? C.table(['Família','Itens','Total','Data'],rows) : '<p class="empty">Nenhuma encomenda.</p>'}
+      </div>
+    `;
+  },
+};
+
+// ── Módulo: Ações ─────────────────────────────────────────────────
+const ModAcoes = {
+  render(data) {
+    const acoes = data.acoes || [];
+    const rows = [...acoes].reverse().slice(0,20).map(a=>[
+      a.nome||'—',
+      a.resultado ? (a.resultado.includes('VITOR')?C.badge('Vitória','green'):C.badge('Derrota','red')) : C.badge('Em andamento','gold'),
+      `<span class="mono">${a.confirmados||0}</span>`,
+      `<span class="mono">${a.reservas||0}</span>`,
+      U.dt(a.ts),
+    ]);
+
+    return `<div class="section card">
+      ${C.sectionHeader('Histórico de ações')}
+      ${rows.length ? C.table(['Nome','Resultado','Confirmados','Reservas','Data'],rows) : '<p class="empty">Nenhuma ação registrada.</p>'}
+    </div>`;
+  },
+};
+
+// ── Módulo: Registros ─────────────────────────────────────────────
+const ModRegistros = {
+  render(data) {
+    const regs = data.registros || {};
+    const recr = data.recrutamentos || [];
+
+    const rows = Object.entries(regs).map(([id,r])=>[
+      r.nome||'—',
+      `<span class="mono">${r.id||'—'}</span>`,
+      r.tel||'—',
+      r.rec||'—',
+      C.badge('Aprovado','green'),
+    ]);
+
+    const rRows = [...recr].reverse().slice(0,15).map(r=>[
+      r.recrutador||'—',
+      r.nome||'—',
+      `<span class="mono">${r.passaporte||'—'}</span>`,
+      r.aprovado!=null ? (r.aprovado ? C.badge('Aprovado','green') : C.badge('Reprovado','red')) : C.badge('Pendente','gold'),
+      U.dt(r.ts),
+    ]);
+
+    return `
+      <div class="grid grid-2" style="gap:1rem">
+        <div class="section card">
+          ${C.sectionHeader(`Membros registrados (${rows.length})`)}
+          ${rows.length ? C.table(['Nome','ID','Telefone','Recrutador','Status'],rows) : '<p class="empty">Nenhum membro aprovado.</p>'}
+        </div>
+        <div class="section card">
+          ${C.sectionHeader(`Recrutamentos (${recr.length})`)}
+          ${rRows.length ? C.table(['Recrutador','Candidato','Passaporte','Status','Data'],rRows) : '<p class="empty">Nenhum recrutamento.</p>'}
+        </div>
+      </div>
+    `;
+  },
+};
+
+// ── Módulo: Overview ─────────────────────────────────────────────
+const ModOverview = {
+  render(data) {
+    const farm = data.farm||{};
+    const caixa = data.caixa||{sujo:0,limpo:0};
+    const regs = data.registros||{};
+    const enc = data.encomendas||[];
+
+    const ativos = Object.values(farm).filter(m=>(m.sujo||0)+(m.comp||0)>0);
+    let tSujo=0,tLimpo=0,metaBatida=0;
+    ativos.forEach(m=>{ tSujo+=m.sujo||0; const r=U.calcFarm(m); if(r.bateuAlguma)metaBatida++; tLimpo+=r.totalLimpo; });
+
+    const totalEnc = enc.reduce((s,e)=>s+(e.total||0),0);
+
+    return `
+      <div class="grid grid-4" style="margin-bottom:1.25rem">
+        ${C.statCard('Membros',Object.keys(regs).length,'aprovados')}
+        ${C.statCard('Ativos no farm',ativos.length,'esta semana')}
+        ${C.statCard('Caixa total',U.R$((caixa.sujo||0)+(caixa.limpo||0)),'sujo + limpo')}
+        ${C.statCard('Encomendas',U.R$(totalEnc),`${enc.length} pedidos`)}
+      </div>
+      <div class="grid grid-2" style="gap:1rem;margin-bottom:1rem">
+        <div class="card">
+          <div class="stat-label" style="margin-bottom:.75rem">Farm desta semana</div>
+          ${C.statCard('Total sujo',U.R$(tSujo))}
+          <div style="height:8px"></div>
+          ${C.statCard('Limpo gerado',U.R$(tLimpo))}
+          <div style="margin-top:.75rem;font-size:12px;color:var(--t2)">Meta batida: ${metaBatida}/${ativos.length} membros ativos</div>
+        </div>
+        <div class="card">
+          <div class="stat-label" style="margin-bottom:.75rem">Caixa da liderança</div>
+          ${C.statCard('Sujo',U.R$(caixa.sujo||0))}
+          <div style="height:8px"></div>
+          ${C.statCard('Limpo',U.R$(caixa.limpo||0))}
+        </div>
+      </div>
+      <div class="card">
+        <div class="stat-label" style="margin-bottom:.75rem">Top 3 farm desta semana</div>
+        ${ativos.slice(0,3).map((m,i)=>{
+          const r=U.calcFarm(m);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b1)">
+            <span style="font-size:14px;min-width:24px">${['🥇','🥈','🥉'][i]}</span>
+            <span style="flex:1;font-size:13px;font-weight:500">${m.nome||m.id}</span>
+            <span class="mono" style="font-size:12px;color:var(--t2)">${U.R$(m.sujo||0)}</span>
+            ${C.memberBadge(r,m)}
+          </div>`;
+        }).join('')||'<p class="empty">Nenhum registro.</p>'}
+      </div>
+    `;
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ACTIONS — operações que escrevem dados
+// ══════════════════════════════════════════════════════════════════
+const MOD = {
+  async resetFarm() {
+    if (!confirm('Tem certeza que quer resetar o farm desta semana?\nEsta ação não pode ser desfeita.')) return;
+    const btn = U.$('btn-reset-farm');
+    if (btn) { btn.disabled=true; btn.textContent='Resetando...'; }
+    try {
+      await API.resetFarm();
+      await DASHBOARD.refresh();
+      alert('Farm resetado com sucesso!');
+    } catch { alert('Erro ao resetar. Verifique o servidor.'); }
+    finally { if(btn){btn.disabled=false;btn.textContent='Resetar semana';} }
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════
+// AUTH — autenticação e sessão
+// ══════════════════════════════════════════════════════════════════
+const AUTH = {
+  async login() {
+    const key = U.$('key-input').value.trim();
+    if (!key) return;
+    try {
+      API._key = key;
+      await API.fetchAll();
+      localStorage.setItem(CONFIG.api.keyStore, key);
+      U.$('auth').style.display = 'none';
+      U.$('app').style.display  = 'flex';
+      DASHBOARD.init();
+    } catch {
+      const e = U.$('auth-err');
+      e.style.display='block';
+      setTimeout(()=>e.style.display='none', 3000);
+    }
+  },
+  restore() {
+    const key = localStorage.getItem(CONFIG.api.keyStore);
+    if (key) { U.$('key-input').value = key; this.login(); }
+  },
+};
+U.$('key-input').addEventListener('keydown', e => { if(e.key==='Enter') AUTH.login(); });
+
+// ══════════════════════════════════════════════════════════════════
+// DASHBOARD — orquestração principal
+// ══════════════════════════════════════════════════════════════════
+const PAGES = [
+  { id:'overview',    label:'Visão geral',  mod: ModOverview   },
+  { id:'farm',        label:'Farm',          mod: ModFarm       },
+  { id:'lideranca',   label:'Liderança',     mod: ModLideranca  },
+  { id:'encomendas',  label:'Encomendas',    mod: ModEncomendas },
+  { id:'acoes',       label:'Ações',         mod: ModAcoes      },
+  { id:'registros',   label:'Registros',     mod: ModRegistros  },
+];
+
+const DASHBOARD = {
+  data:    {},
+  current: 'overview',
+  timer:   null,
+
+  init() {
+    // Topbar
+    U.$('tb-faction').textContent = CONFIG.faction;
+
+    // Nav
+    U.$('nav').innerHTML = PAGES.map(p =>
+      `<button class="nav-btn${p.id===this.current?' active':''}" onclick="DASHBOARD.goTo('${p.id}')">${p.label}</button>`
+    ).join('');
+
+    this.refresh();
+    this.timer = setInterval(() => this.refresh(), CONFIG.api.poll);
+  },
+
+  goTo(id) {
+    this.current = id;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.textContent === PAGES.find(p=>p.id===id)?.label));
+    this.renderPage();
+  },
+
+  async refresh() {
+    try {
+      const json = await API.fetchAll();
+      this.data = json;
+      this.renderPage();
+      U.$('live-txt').textContent = 'ao vivo';
+      U.$('footer-txt').textContent = `Última atualização: ${U.ts(Date.now())}`;
+    } catch {
+      U.$('live-txt').textContent = 'offline';
+    }
+  },
+
+  renderPage() {
+    const page = PAGES.find(p => p.id === this.current);
+    if (!page) return;
+    U.$('main').innerHTML = page.mod.render(this.data);
+  },
+};
+
+// ── Boot ──────────────────────────────────────────────────────────
+AUTH.restore();
+</script>
+</body>
+</html>

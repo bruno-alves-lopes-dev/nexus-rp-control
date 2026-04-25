@@ -1,0 +1,140 @@
+{
+  "version": 2,
+  "users": [
+    {
+      "id": "admin",
+      "username": "admin",
+      "password": "admin123",
+      "role": "admin",
+      "name": "Administrador",
+      "active": true
+    },
+    {
+      "id": "viewer",
+      "username": "viewer",
+      "password": "viewer123",
+      "role": "viewer",
+      "name": "Visualizacao",
+      "active": true
+    }
+  ],
+  "bots": {
+    "nexus": {
+      "id": "nexus",
+      "name": "Nexus",
+      "description": "Bot principal da Nexus.",
+      "color": "#c9a227",
+      "botKey": "nexus-bot-key",
+      "enabled": true,
+      "settings": {
+        "ui": {
+          "displayName": "Nexus",
+          "accent": "#c9a227"
+        },
+        "farm": {
+          "metas": {
+            "dinheiroSujo": 100000,
+            "componentes": 5000
+          },
+          "taxas": {
+            "droga": {
+              "label": "Droga",
+              "pct": 0.65,
+              "color": "#e05c5c"
+            },
+            "acao": {
+              "label": "Acao",
+              "pct": 0.75,
+              "color": "#5b9cf6"
+            },
+            "livre": {
+              "label": "Livre",
+              "pct": 1,
+              "color": "#4caf6e"
+            }
+          },
+          "convLimpo": 0.5
+        },
+        "encomendas": {
+          "tipos": {
+            "comum": {
+              "label": "Comum",
+              "preco": 45
+            },
+            "incomum": {
+              "label": "Incomum",
+              "preco": 50
+            },
+            "rara": {
+              "label": "Rara",
+              "preco": 55
+            },
+            "mitica": {
+              "label": "Mitica",
+              "preco": 60
+            },
+            "lendaria": {
+              "label": "Lendaria",
+              "preco": 65
+            }
+          }
+        }
+      },
+      "data": {
+        "farm": {},
+        "caixa": {
+          "sujo": 0,
+          "limpo": 0,
+          "auditoria": []
+        },
+        "bau": {
+          "itens": {},
+          "auditoria": []
+        },
+        "compras": [],
+        "encomendas": [],
+        "acoes": [],
+        "registros": {},
+        "recrutamentos": [],
+        "farmLogs": [],
+        "metrics": {},
+        "notes": [],
+        "lastSync": null,
+        "lastSyncBySection": {}
+      },
+      "history": {
+        "farm": [],
+        "caixa": [],
+        "encomendas": [],
+        "acoes": [],
+        "settings": []
+      },
+      "commandCatalog": [
+        {
+          "type": "farm.reset",
+          "label": "Resetar farm",
+          "group": "Farm",
+          "description": "Zera o farm semanal e inicia um novo ciclo.",
+          "payloadExample": {
+            "confirmar": true
+          },
+          "adminOnly": true
+        },
+        {
+          "type": "settings.apply",
+          "label": "Aplicar configuracoes",
+          "group": "Sistema",
+          "description": "Sincroniza as configuracoes editadas no painel com o bot.",
+          "payloadExample": {},
+          "adminOnly": true
+        }
+      ],
+      "commands": [],
+      "meta": {
+        "tags": []
+      },
+      "createdAt": 1776201200633,
+      "updatedAt": 1776201200633
+    }
+  }
+}
