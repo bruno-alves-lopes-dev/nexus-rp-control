@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/nexus_rp_control.iml" filepath="$PROJECT_DIR$/.idea/nexus_rp_control.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nexus-rp-control-react.iml" filepath="$PROJECT_DIR$/.idea/nexus-rp-control-react.iml" />
     </modules>
   </component>
 </project>

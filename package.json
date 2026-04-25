@@ -1,16 +1,33 @@
 {
-  "name": "dashboard-multi-bot",
-  "version": "1.0.0",
+  "name": "nexus-rp-control-react",
+  "version": "2.0.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "concurrently \"node server.cjs\" \"vite --host 0.0.0.0\"",
+    "server": "node server.cjs",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server.cjs"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest",
+    "framer-motion": "latest",
+    "clsx": "latest",
+    "express": "^4.21.2",
+    "concurrently": "latest"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "postcss": "latest",
+    "autoprefixer": "latest"
   }
 }
